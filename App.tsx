@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -326,10 +327,10 @@ export default function App() {
             </View>
             <Pressable
               accessibilityRole="button"
-              onPress={() => setSettingsOpen(!settingsOpen)}
+              onPress={() => setSettingsOpen(true)}
               style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
             >
-              <Text style={styles.settingsButtonText}>{settingsOpen ? 'Close' : '⚙ Settings'}</Text>
+              <Text style={styles.settingsButtonText}>⚙ Settings</Text>
             </Pressable>
           </View>
 
@@ -485,93 +486,120 @@ export default function App() {
             </View>
           )}
 
-          {settingsOpen ? (
-            <View style={styles.settingsPanel}>
-              <Text style={styles.panelTitle}>Private GitHub sync</Text>
-              <Text style={styles.panelSubtitle}>
-                Your tasks stay in a private repository you control. No Listy server or account required.
-              </Text>
-              <View style={styles.formRow}>
-                <TextInput
-                  accessibilityLabel="GitHub owner"
-                  autoCapitalize="none"
-                  onChangeText={setRepositoryOwner}
-                  placeholder="GitHub owner"
-                  placeholderTextColor={colors.muted}
-                  style={styles.settingsInput}
-                  value={repositoryOwner}
-                />
-                <TextInput
-                  accessibilityLabel="Repository name"
-                  autoCapitalize="none"
-                  onChangeText={setRepositoryName}
-                  placeholder="Private repository"
-                  placeholderTextColor={colors.muted}
-                  style={styles.settingsInput}
-                  value={repositoryName}
-                />
-              </View>
-              <TextInput
-                accessibilityLabel="Markdown file path"
-                autoCapitalize="none"
-                onChangeText={setRepositoryPath}
-                placeholder="tasks.md"
-                placeholderTextColor={colors.muted}
-                style={styles.settingsInput}
-                value={repositoryPath}
-              />
-              <TextInput
-                accessibilityLabel="GitHub fine-grained personal access token"
-                autoCapitalize="none"
-                onChangeText={setTokenDraft}
-                placeholder={token ? 'Token saved securely · enter a new one to replace' : 'Fine-grained GitHub token'}
-                placeholderTextColor={colors.muted}
-                secureTextEntry
-                style={styles.settingsInput}
-                value={tokenDraft}
-              />
-              <Text style={styles.formHint}>
-                Create a fine-grained token for this repo only, with Contents read/write access. On web, the token stays in this browser session; on mobile, it is stored in Keychain/Keystore.
-              </Text>
-              <Pressable onPress={() => { void Linking.openURL('https://github.com/settings/personal-access-tokens/new'); }}>
-                <Text style={styles.linkText}>Create a GitHub token ↗</Text>
-              </Pressable>
-              <View style={styles.settingsActions}>
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={syncStatus === 'Connecting to GitHub…'}
-                  onPress={() => { void connectRepository(); }}
-                  style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
-                >
-                  <Text style={styles.addButtonText}>{syncStatus === 'Connecting to GitHub…' ? 'Connecting…' : 'Connect & sync'}</Text>
-                </Pressable>
-                {settings && token ? (
-                  <>
-                    <Pressable onPress={() => { void syncNow(); }} style={styles.secondaryButton}>
-                      <Text style={styles.secondaryButtonText}>Sync now</Text>
-                    </Pressable>
-                    <Pressable onPress={() => { void pullLatest(); }} style={styles.secondaryButton}>
-                      <Text style={styles.secondaryButtonText}>Pull latest</Text>
-                    </Pressable>
-                    <Pressable onPress={() => { void disconnectRepository(); }} style={styles.secondaryButton}>
-                      <Text style={styles.secondaryButtonText}>Disconnect</Text>
-                    </Pressable>
-                  </>
-                ) : null}
-              </View>
-              <Text style={styles.formHint}>
-                Markdown path: <Text style={styles.monoText}>{settings?.repository.path ?? (repositoryPath || 'tasks.md')}</Text>
-                {settings?.remoteSha ? ` · revision ${settings.remoteSha.slice(0, 7)}` : ''}
-              </Text>
-            </View>
-          ) : null}
-
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Made for your own little adventures <Text style={styles.footerAccent}>✦</Text></Text>
             <Text style={styles.footerText}>{Platform.OS === 'web' ? 'Browser edition' : 'Mobile edition'} · your data, your repo</Text>
           </View>
           </View>
         </ScrollView>
+        <Modal
+          animationType="fade"
+          onRequestClose={() => setSettingsOpen(false)}
+          transparent
+          visible={settingsOpen}
+        >
+          <View style={styles.settingsModal}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close settings"
+              onPress={() => setSettingsOpen(false)}
+              style={styles.settingsBackdrop}
+            />
+            <View style={styles.settingsPanel}>
+              <View style={styles.settingsHeader}>
+                <Text style={styles.panelTitle}>Private GitHub sync</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close settings"
+                  onPress={() => setSettingsOpen(false)}
+                  style={styles.settingsCloseButton}
+                >
+                  <Text style={styles.settingsCloseText}>×</Text>
+                </Pressable>
+              </View>
+              <ScrollView
+                contentContainerStyle={styles.settingsContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <Text style={styles.panelSubtitle}>
+                  Your tasks stay in a private repository you control. No Listy server or account required.
+                </Text>
+                <View style={styles.formRow}>
+                  <TextInput
+                    accessibilityLabel="GitHub owner"
+                    autoCapitalize="none"
+                    onChangeText={setRepositoryOwner}
+                    placeholder="GitHub owner"
+                    placeholderTextColor={colors.muted}
+                    style={styles.settingsInput}
+                    value={repositoryOwner}
+                  />
+                  <TextInput
+                    accessibilityLabel="Repository name"
+                    autoCapitalize="none"
+                    onChangeText={setRepositoryName}
+                    placeholder="Private repository"
+                    placeholderTextColor={colors.muted}
+                    style={styles.settingsInput}
+                    value={repositoryName}
+                  />
+                </View>
+                <TextInput
+                  accessibilityLabel="Markdown file path"
+                  autoCapitalize="none"
+                  onChangeText={setRepositoryPath}
+                  placeholder="tasks.md"
+                  placeholderTextColor={colors.muted}
+                  style={styles.settingsInput}
+                  value={repositoryPath}
+                />
+                <TextInput
+                  accessibilityLabel="GitHub fine-grained personal access token"
+                  autoCapitalize="none"
+                  onChangeText={setTokenDraft}
+                  placeholder={token ? 'Token saved securely · enter a new one to replace' : 'Fine-grained GitHub token'}
+                  placeholderTextColor={colors.muted}
+                  secureTextEntry
+                  style={styles.settingsInput}
+                  value={tokenDraft}
+                />
+                <Text style={styles.formHint}>
+                  Create a fine-grained token for this repo only, with Contents read/write access. On web, the token stays in this browser session; on mobile, it is stored in Keychain/Keystore.
+                </Text>
+                <Pressable onPress={() => { void Linking.openURL('https://github.com/settings/personal-access-tokens/new'); }}>
+                  <Text style={styles.linkText}>Create a GitHub token ↗</Text>
+                </Pressable>
+                <View style={styles.settingsActions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={syncStatus === 'Connecting to GitHub…'}
+                    onPress={() => { void connectRepository(); }}
+                    style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.addButtonText}>{syncStatus === 'Connecting to GitHub…' ? 'Connecting…' : 'Connect & sync'}</Text>
+                  </Pressable>
+                  {settings && token ? (
+                    <>
+                      <Pressable onPress={() => { void syncNow(); }} style={styles.secondaryButton}>
+                        <Text style={styles.secondaryButtonText}>Sync now</Text>
+                      </Pressable>
+                      <Pressable onPress={() => { void pullLatest(); }} style={styles.secondaryButton}>
+                        <Text style={styles.secondaryButtonText}>Pull latest</Text>
+                      </Pressable>
+                      <Pressable onPress={() => { void disconnectRepository(); }} style={styles.secondaryButton}>
+                        <Text style={styles.secondaryButtonText}>Disconnect</Text>
+                      </Pressable>
+                    </>
+                  ) : null}
+                </View>
+                <Text style={styles.formHint}>
+                  Markdown path: <Text style={styles.monoText}>{settings?.repository.path ?? (repositoryPath || 'tasks.md')}</Text>
+                  {settings?.remoteSha ? ` · revision ${settings.remoteSha.slice(0, 7)}` : ''}
+                </Text>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -760,7 +788,13 @@ const styles = StyleSheet.create({
   emptyIcon: { fontSize: 27, marginBottom: 10 },
   emptyTitle: { color: colors.text, fontSize: 13, fontWeight: '800', textAlign: 'center' },
   emptySubtitle: { color: colors.muted, fontSize: 10, marginTop: 6, textAlign: 'center' },
-  settingsPanel: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 20, padding: 17, marginTop: 20, gap: 10 },
+  settingsModal: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 18 },
+  settingsBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0, 0, 0, 0.72)' },
+  settingsPanel: { width: '100%', maxWidth: 560, maxHeight: '90%', backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 20, padding: 17 },
+  settingsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  settingsCloseButton: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  settingsCloseText: { color: colors.muted, fontSize: 26, lineHeight: 30 },
+  settingsContent: { gap: 10, paddingBottom: 2 },
   formRow: { flexDirection: 'row', gap: 8 },
   settingsInput: { backgroundColor: colors.elevated, borderRadius: 11, paddingVertical: 11, paddingHorizontal: 12, color: colors.text, fontSize: 11, flex: 1 },
   formHint: { color: colors.muted, fontSize: 9, lineHeight: 14 },
@@ -771,6 +805,5 @@ const styles = StyleSheet.create({
   monoText: { color: colors.text, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   footer: { paddingVertical: 26, alignItems: 'center', gap: 5 },
   footerText: { color: colors.muted, fontSize: 9 },
-  footerAccent: { color: colors.pink },
   mutedText: { color: colors.muted, fontSize: 12 },
 });
