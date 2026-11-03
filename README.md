@@ -46,4 +46,10 @@ The configured file contains ordinary Markdown checkboxes. Listy stores task ide
 
 ## Build native apps
 
-The project is configured for Expo's native iOS and Android build workflows. Use Expo Application Services (EAS) to create installable iOS and Android builds; native builds and signing credentials are not included in this repository.
+The project is configured for Expo's native iOS and Android build workflows. To create an installable Android APK for testing:
+
+```sh
+npx eas-cli@latest build --platform android --profile preview
+```
+
+The `preview` profile builds an APK for direct installation. The `production` profile builds an Android App Bundle for Play Store distribution. EAS manages the Android signing credentials; native build outputs are not committed to this repository.
